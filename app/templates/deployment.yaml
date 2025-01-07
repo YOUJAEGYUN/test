@@ -39,7 +39,7 @@ spec:
           command: ["/bin/bash", "-c"]
           args: 
             - |
-              echo Hi Daewoo > /home/logistics.txt
+              echo Hi Daewoo!! > /home/logistics.txt
               nginx -g 'daemon off;'
           ports:
             - name: http
