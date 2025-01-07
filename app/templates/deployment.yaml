@@ -42,7 +42,7 @@ spec:
               echo Hi Daewoo!! > /home/logistics.txt
               nginx -g 'daemon off;'
           ports:
-            - name: https
+            - name: http
               containerPort: {{ .Values.service.port }}
               protocol: TCP
           livenessProbe:
