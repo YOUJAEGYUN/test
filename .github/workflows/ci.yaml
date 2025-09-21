@@ -74,7 +74,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      packages: write   # GHCR push
+      packages: write    # GHCR push 권한
 
     steps:
       - name: Checkout
@@ -89,14 +89,17 @@ jobs:
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
-          # service-a 안의 gradle 캐시 키를 따도록 설정
           path: ~/.gradle/caches
           key: ${{ runner.os }}-gradle-${{ hashFiles('service-a/**/*.gradle*', 'service-a/**/gradle-wrapper.properties') }}
           restore-keys: ${{ runner.os }}-gradle-
 
+      - name: Make gradlew executable
+        working-directory: service-a
+        run: chmod +x gradlew
+
       - name: Build & Test (make jar)
         working-directory: service-a
-        run: ./gradlew clean build
+        run: ./gradlew --no-daemon clean build
 
       - name: Login to GHCR
         uses: docker/login-action@v3
@@ -108,9 +111,16 @@ jobs:
       - name: Build & Push Docker image (service-a)
         id: image
         run: |
-          IMAGE=ghcr.io/${{ github.repository }}/service-a
+          # 리포지토리 이름을 소문자로 바꿔 Docker 규칙 충족
+          IMAGE=ghcr.io/$(echo '${{ github.repository }}' | tr '[:upper:]' '[:lower:]')/service-a
           TAG=${{ github.sha }}
-          # Dockerfile이 service-a 폴더에 있으므로 컨텍스트를 service-a로 지정
           docker build -t "$IMAGE:$TAG" service-a
           docker push "$IMAGE:$TAG"
           echo "image=$IMAGE:$TAG" >> $GITHUB_OUTPUT
+
+      # --- 옵션: 컨테이너 취약점 스캔 ---
+      # - name: Trivy scan
+      #   uses: aquasecurity/trivy-action@0.24.0
+      #   with:
+      #     image-ref: ${{ steps.image.outputs.image }}
+      #     format: 'table'
